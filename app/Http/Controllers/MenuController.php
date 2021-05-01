@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MenuItem;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\DB;
 
 class MenuController extends BaseController
 {
@@ -96,5 +97,40 @@ class MenuController extends BaseController
 
     public function getMenuItems() {
         //throw new \Exception('implement in coding task 3');
+        //$menu = MenuItem::select(DB::RAW('menu_items.* AS a'))->join('menu_items AS b', 'a.id','=', 'b.parent_id', 'left outer')->orderBy('a.id', 'ASC')->get()->toArray();
+
+        //$menu = DB::Raw('SELECT id, name, url, parent_id, created_at, updated_at, 1000*id AS ordrKy FROM menu_items WHERE parent_id IS NULL UNION ALL SELECT id, name, url, parent_id, created_at, updated_at, 1000*parent_id AS ordrKy FROM menu_items WHERE parent_id IS NOT NULL ORDER BY ordrKy, id');
+
+        /*$query = DB::Raw('SELECT a.*, b.* FROM menu_items a LEFT OUTER JOIN menu_items b ON a.id=b.parent_id WHERE a.parent_id IS NOT NULL');
+        $data = DB::select($query);
+                $data = array_map(function ($item) {
+                    return (array)$item;
+                }, $data);
+
+        */
+
+        $data = MenuItem::orderBy('id', 'ASC')->get()->toArray();
+        $last_id=0;
+        $i=0;
+        foreach($data as $d){
+            if($d['parent_id'] !=null){
+                if($d['parent_id']==$last_id){
+                    $res[$i]=$d;
+                    $res[$last_id]['children'][]=$d;
+                }
+                else{
+                    $res[$i]=$d;
+                    $res[$i]['children'][] = $d;
+                    $last_id = $d['parent_id'];
+                }
+            }
+            else{
+                $res[$i] = $d;
+            }
+            $i++;
+        }
+
+        $result = response()->json($res);
+        return $result;
     }
 }
