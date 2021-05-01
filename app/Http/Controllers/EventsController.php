@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\Workshop;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\DB;
 
 class EventsController extends BaseController
 {
@@ -97,7 +99,21 @@ class EventsController extends BaseController
      */
 
     public function getEventsWithWorkshops() {
-        throw new \Exception('implement in coding task 1');
+        //throw new \Exception('implement in coding task 1');
+
+        $events = Event::OrderBy('id', 'ASC')->get()->toArray();
+        $data=array();
+        $i=0;
+        foreach($events as $e){
+            $data[$i]=$e;
+            $workshop = Workshop::where('event_id',$e['id'])->OrderBy('id', 'ASC')->get()->toArray();
+            foreach($workshop as $w)
+                $data[$i]['workshop'][]=$w;
+
+            $i++;
+        }
+        $result = response()->json($data);
+        return $result;
     }
 
 
@@ -176,6 +192,22 @@ class EventsController extends BaseController
      */
 
     public function getFutureEventsWithWorkshops() {
-        throw new \Exception('implement in coding task 2');
+        //throw new \Exception('implement in coding task 2');
+
+        $events = Event::select('events.*')->join('workshops','workshops.event_id','=','events.id')->whereDate('workshops.start', '>', DB::Raw('CURDATE()'))->groupBy('events.id')->OrderBy('id', 'ASC')->get()->toArray();
+        $data=array();
+        $i=0;
+        foreach($events as $e){
+            //echo $e['id'];
+            $data[$i]=$e;
+            $workshop = Workshop::where('event_id',$e['id'])->OrderBy('id', 'ASC')->get()->toArray();
+            //dd($workshop);
+            foreach($workshop as $w)
+                $data[$i]['workshop'][]=$w;
+
+            $i++;
+        }
+        $result = response()->json($data);
+        return $result;
     }
 }
